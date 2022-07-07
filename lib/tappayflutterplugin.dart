@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 
+import 'log_util.dart';
+
 enum TappayServerType {
   sandBox,
   production,
@@ -345,13 +347,17 @@ class Tappayflutterplugin {
   //request google pay payment data
   static Future<void> requestPaymentData(
       String totalPrice, String currencyCode) async {
-    await _channel.invokeMethod(
-      'requestPaymentData',
-      {
-        'totalPrice': totalPrice,
-        'currencyCode': currencyCode,
-      },
-    );
+    try {
+      String result = await _channel.invokeMethod(
+        'requestPaymentData',
+        {
+          'totalPrice': totalPrice,
+          'currencyCode': currencyCode,
+        },
+      );
+    } on PlatformException catch (error) {
+      Log.d("PlatformException: ${error.message}");
+    }
   }
 
   //Get google pay prime
