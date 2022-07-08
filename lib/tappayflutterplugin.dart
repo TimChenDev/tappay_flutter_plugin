@@ -136,15 +136,20 @@ class Tappayflutterplugin {
     required String dueYear,
     required String ccv,
   }) async {
-    final bool isValid = await _channel.invokeMethod(
-      'isCardValid',
-      {
-        'cardNumber': cardNumber,
-        'dueMonth': dueMonth,
-        'dueYear': dueYear,
-        'ccv': ccv,
-      },
-    );
+    bool isValid = false;
+    try {
+      isValid = await _channel.invokeMethod(
+        'isCardValid',
+        {
+          'cardNumber': cardNumber,
+          'dueMonth': dueMonth,
+          'dueYear': dueYear,
+          'ccv': ccv,
+        },
+      );
+    } on PlatformException catch (error) {
+      Log.d("PlatformException: ${error.message}, ${error.details}");
+    }
     return isValid;
   }
 
@@ -155,6 +160,12 @@ class Tappayflutterplugin {
     required String dueYear,
     required String ccv,
   }) async {
+
+    try {
+
+    } on PlatformException catch (error) {
+      Log.d("PlatformException: ${error.message}, ${error.details}");
+    }
     String response = await _channel.invokeMethod(
       'getPrime',
       {
