@@ -20,18 +20,19 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry
 import tech.cherri.tpdirect.api.*
+import tech.cherri.tpdirect.callback.dto.TPDCardInfoDto
+import tech.cherri.tpdirect.callback.dto.TPDMerchantReferenceInfoDto
 
 private var paymentData: PaymentData? = null
+private var methodResult: Result? = null
 
 /** TappayflutterpluginPlugin */
 class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware, PluginRegistry.ActivityResultListener {
   lateinit var plugin: TappayflutterpluginPlugin
-  private var LOAD_PAYMENT_DATA_REQUEST_CODE = 102
   private var context: Context? = null
   private var activity: Activity? = null
   private var tpdLinePayResultListenerInterface: TPDLinePayResultListenerInterface = TPDLinePayResultListenerInterface()
   private val tpdEasyWalletResultListenerInterface: TPDEasyWalletResultListenerInterface = TPDEasyWalletResultListenerInterface()
-  private val tpdGooglePayListenerInterfaceInterface: TPDGooglePayListenerInterface = TPDGooglePayListenerInterface()
   private val tpdMerchant = TPDMerchant()
   private val tpdConsumer = TPDConsumer()
   private var tpdGooglePay: TPDGooglePay? = null
@@ -43,7 +44,26 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
   }
 
   companion object{
+    const val TAG = "TappayPlugin"
+
+    const val LOAD_PAYMENT_DATA_REQUEST_CODE = 102
+
+    // 針對各種錯誤狀況制定 ErrorCode
     const val ERROR_CODE_CONTEXT_IS_NULL = "1001"
+    const val ERROR_CODE_SETUP_TAPPAY_ERROR = "1002"
+    const val ERROR_CODE_IS_CARD_VALID = "1003"
+    const val ERROR_CODE_USER_CANCELED = "1004"
+
+    // 針對支付功能不可用時的 ErrorCode
+    const val ERROR_CODE_EASY_WALLET_UNAVAILABLE = "2001"
+    const val ERROR_CODE_LINE_PAY_UNAVAILABLE = "2002"
+    const val ERROR_CODE_GOOGLE_PAY_UNAVAILABLE = "2003"
+
+    // 針對 getPrime 失敗的 ErrorCode
+    const val ERROR_CODE_GET_PRIME_FAILED = "3000"
+    const val ERROR_CODE_GET_EASY_WALLET_PRIME_FAILED = "3001"
+    const val ERROR_CODE_GET_LINE_PAY_PRIME_FAILED = "3002"
+    const val ERROR_CODE_GET_GOOGLE_PAY_PRIME_FAILED = "3003"
   }
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
@@ -75,15 +95,17 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
         Activity.RESULT_OK -> {
           if (data != null) {
             paymentData = PaymentData.getFromIntent(data)
+            methodResult?.success(paymentData!!.toJson())
           }
         }
         Activity.RESULT_CANCELED -> {
-          Log.d("RESULT_CANCELED", data.toString())
+          methodResult?.error(ERROR_CODE_USER_CANCELED, "User canceled", "User canceled the payment")
         }
         AutoResolveHelper.RESULT_ERROR -> {
           val status: Status? = AutoResolveHelper.getStatusFromIntent(data)
           if (status != null) {
             Log.d("RESULT_ERROR", "AutoResolveHelper.RESULT_ERROR : " + status.statusCode.toString() + " , message = " + status.statusMessage)
+            methodResult?.error(ERROR_CODE_USER_CANCELED, status.statusCode.toString(), status.statusMessage)
           }
         }
       }
@@ -115,6 +137,7 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
 //  }
 
   override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
+    methodResult = result
 
     when (call.method) {
       in "setupTappay" -> {
@@ -124,7 +147,9 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
           val appId: Int? = call.argument("appId")
           val appKey: String? = call.argument("appKey")
           val serverType: String? = call.argument("serverType")
-          setupTappay(appId, appKey, serverType, errorMessage = { result.error("", it, "") })
+          setupTappay(appId, appKey, serverType, errorMessage = {
+            result.error(ERROR_CODE_SETUP_TAPPAY_ERROR, "Setup Tappay error", it)
+          })
         }
       }
 
@@ -510,7 +535,13 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
 
     if (this.activity != null) {
       tpdGooglePay = TPDGooglePay(this.activity, tpdMerchant, tpdConsumer)
-      tpdGooglePay!!.isGooglePayAvailable(this.tpdGooglePayListenerInterfaceInterface)
+      tpdGooglePay!!.isGooglePayAvailable { isReadyToPay: Boolean, msg: String ->
+        if (isReadyToPay) {
+          methodResult?.success(isReadyToPay)
+        } else {
+          methodResult?.error(ERROR_CODE_GOOGLE_PAY_UNAVAILABLE, "Cannot use Pay with Google", msg)
+        }
+      }
     } else {
       Log.d("preparePaymentData", "activity is null")
     }
@@ -527,8 +558,16 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
 
   //get google pay prime
   private fun getGooglePayPrime() {
-    Log.d("getGooglePayPrime", "paymentData: $paymentData")
-    tpdGooglePay?.getPrime(paymentData, tpdGooglePayListenerInterfaceInterface, tpdGooglePayListenerInterfaceInterface)
+    tpdGooglePay?.getPrime(paymentData, { prime: String?, cardInfo: TPDCardInfoDto?, merchantReferenceInfo: TPDMerchantReferenceInfoDto? ->
+      if (BuildConfig.DEBUG) {
+        Log.d(TAG, "prime = $prime")
+        Log.d(TAG, "cardInfo = $cardInfo")
+        Log.d(TAG, "merchantReferenceInfo = $merchantReferenceInfo")
+      }
+      methodResult?.success(prime)
+    }, {status: Int, msg: String? ->
+      Log.d(TAG, "TapPay getPrime failed : $status, msg : $msg")
+      methodResult?.error(ERROR_CODE_GET_GOOGLE_PAY_PRIME_FAILED, "Get google pay prime failed", msg)
+    })
   }
-
 }

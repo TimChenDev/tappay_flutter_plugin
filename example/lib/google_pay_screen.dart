@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tappayflutterplugin/tappayflutterplugin.dart';
+
 import 'constant.dart';
 
 class GooglePayScreen extends StatefulWidget {
@@ -53,19 +54,23 @@ class _GooglePayScreenState extends State<GooglePayScreen> {
           Container(
             color: Colors.blue,
             child: FlatButton(
-              onPressed: () {
-                Tappayflutterplugin.preparePaymentData(
+              onPressed: () async {
+                bool isPrepared = await Tappayflutterplugin.preparePaymentData(
                   allowedNetworks: [
                     TPDCardType.masterCard,
+                    TPDCardType.jcb,
+                    TPDCardType.visa,
                   ],
                   allowedAuthMethods: [
                     TPDCardAuthMethod.panOnly,
+                    TPDCardAuthMethod.cryptogram3ds,
                   ],
                   merchantName: 'TEST MERCHANT',
                   isShippingAddressRequired: false,
                   isEmailRequired: false,
                   isPhoneNumberRequired: false,
                 );
+                print("preparePaymentData: $isPrepared");
               },
               child: Text('Prepare google pay'),
             ),
@@ -74,7 +79,18 @@ class _GooglePayScreenState extends State<GooglePayScreen> {
             color: Colors.blue,
             child: FlatButton(
               onPressed: () async {
-                await Tappayflutterplugin.requestPaymentData('100', 'TWD');
+                await Tappayflutterplugin.requestPaymentData(
+                  totalPrice: '1',
+                  currencyCode: 'TWD',
+                  onSuccess: (result) {
+                    print('requestPaymentData is success, now you can get google pay prime');
+                    print('result: $result');
+                  },
+                  onError: (message) {
+                    print('requestPaymentData is error');
+                    print('message: $message');
+                  },
+                );
               },
               child: Text('Request payment data'),
             ),
@@ -83,7 +99,14 @@ class _GooglePayScreenState extends State<GooglePayScreen> {
             color: Colors.blue,
             child: FlatButton(
               onPressed: () async {
-                await Tappayflutterplugin.getGooglePayPrime();
+                await Tappayflutterplugin.getGooglePayPrime(
+                  onSuccess: (prime) {
+                    print('getGooglePayPrime is success, prime: $prime');
+                  },
+                  onError: (message) {
+                    print('getGooglePayPrime is error, message: $message');
+                  },
+                );
               },
               child: Text('Get google pay prime'),
             ),

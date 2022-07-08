@@ -114,17 +114,18 @@ class Tappayflutterplugin {
         break;
     }
 
-    final String? error = await _channel.invokeMethod(
-      'setupTappay',
-      {
-        'appId': appId,
-        'appKey': appKey,
-        'serverType': st,
-      },
-    );
-
-    if (error != null) {
-      errorMessage(error);
+    try {
+      await _channel.invokeMethod(
+        'setupTappay',
+        {
+          'appId': appId,
+          'appKey': appKey,
+          'serverType': st,
+        },
+      );
+    } on PlatformException catch (error) {
+      Log.d("PlatformException: ${error.message}, ${error.details}");
+      errorMessage(error.details ?? "");
     }
   }
 
@@ -282,7 +283,7 @@ class Tappayflutterplugin {
   }
 
   //GooglePay prepare payment data
-  static Future<void> preparePaymentData({
+  static Future<bool> preparePaymentData({
     required List<TPDCardType> allowedNetworks,
     required List<TPDCardAuthMethod> allowedAuthMethods,
     required String merchantName,
@@ -330,23 +331,33 @@ class Tappayflutterplugin {
       methods.add(value);
     }
 
-    await _channel.invokeMethod(
-      'preparePaymentData',
-      {
-        'allowedNetworks': networks,
-        'allowedAuthMethods': methods,
-        'merchantName': merchantName,
-        'isPhoneNumberRequired': isPhoneNumberRequired,
-        'isShippingAddressRequired': isShippingAddressRequired,
-        'isEmailRequired': isEmailRequired,
-      },
-    );
-    return;
+    bool isPrepared = false;
+    try {
+      isPrepared = await _channel.invokeMethod(
+        'preparePaymentData',
+        {
+          'allowedNetworks': networks,
+          'allowedAuthMethods': methods,
+          'merchantName': merchantName,
+          'isPhoneNumberRequired': isPhoneNumberRequired,
+          'isShippingAddressRequired': isShippingAddressRequired,
+          'isEmailRequired': isEmailRequired,
+        },
+      );
+    } on PlatformException catch (error) {
+      Log.d("PlatformException: ${error.message}, ${error.details}");
+    }
+
+    return isPrepared;
   }
 
   //request google pay payment data
-  static Future<void> requestPaymentData(
-      String totalPrice, String currencyCode) async {
+  static Future<void> requestPaymentData({
+    required String totalPrice,
+    required String currencyCode,
+    required Function(String) onSuccess,
+    required Function(String) onError,
+  }) async {
     try {
       String result = await _channel.invokeMethod(
         'requestPaymentData',
@@ -355,13 +366,24 @@ class Tappayflutterplugin {
           'currencyCode': currencyCode,
         },
       );
+      onSuccess(result);
     } on PlatformException catch (error) {
-      Log.d("PlatformException: ${error.message}");
+      Log.d("PlatformException: ${error.message}, ${error.details}");
+      onError(error.message ?? "");
     }
   }
 
   //Get google pay prime
-  static Future<void> getGooglePayPrime() async {
-    await _channel.invokeMethod('getGooglePayPrime');
+  static Future<void> getGooglePayPrime({
+    required Function(String) onSuccess,
+    required Function(String) onError,
+  }) async {
+    try {
+      String result = await _channel.invokeMethod('getGooglePayPrime');
+      onSuccess(result);
+    } on PlatformException catch (error) {
+      Log.d("PlatformException: ${error.message}, ${error.details}");
+      onError(error.message ?? "");
+    }
   }
 }
