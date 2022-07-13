@@ -47,36 +47,7 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
     const val TAG = "TappayPlugin"
 
     const val LOAD_PAYMENT_DATA_REQUEST_CODE = 102
-
-    /**
-     * 找不到對應的 method
-     */
-    const val ERROR_CODE_NO_MATCHED_METHOD = "0001"
-    /**
-     * 完全沒有變數
-     */
-    const val ERROR_CODE_NO_ARGUMENTS = "0002"
-    /**
-     * 缺少某個變數
-     */
-    const val ERROR_CODE_MISSING_ARGUMENTS = "0003"
-
-    // 針對各種錯誤狀況制定 ErrorCode
-    const val ERROR_CODE_CONTEXT_IS_NULL = "1001"
-    const val ERROR_CODE_SETUP_TAPPAY_ERROR = "1002"
-    const val ERROR_CODE_IS_CARD_VALID = "1003"
-    const val ERROR_CODE_USER_CANCELED = "1004"
-
-    // 針對支付功能不可用時的 ErrorCode
-    const val ERROR_CODE_EASY_WALLET_UNAVAILABLE = "2001"
-    const val ERROR_CODE_LINE_PAY_UNAVAILABLE = "2002"
-    const val ERROR_CODE_GOOGLE_PAY_UNAVAILABLE = "2003"
-
-    // 針對 getPrime 失敗的 ErrorCode
-    const val ERROR_CODE_GET_PRIME_FAILED = "3000"
-    const val ERROR_CODE_GET_EASY_WALLET_PRIME_FAILED = "3001"
-    const val ERROR_CODE_GET_LINE_PAY_PRIME_FAILED = "3002"
-    const val ERROR_CODE_GET_GOOGLE_PAY_PRIME_FAILED = "3003"
+    
   }
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
@@ -112,13 +83,13 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
           }
         }
         Activity.RESULT_CANCELED -> {
-          methodResult?.error(ERROR_CODE_USER_CANCELED, "User canceled", "User canceled the payment")
+          methodResult?.error(ErrorCode.USER_CANCELED, "User canceled", "User canceled the payment")
         }
         AutoResolveHelper.RESULT_ERROR -> {
           val status: Status? = AutoResolveHelper.getStatusFromIntent(data)
           if (status != null) {
             Log.d("RESULT_ERROR", "AutoResolveHelper.RESULT_ERROR : " + status.statusCode.toString() + " , message = " + status.statusMessage)
-            methodResult?.error(ERROR_CODE_USER_CANCELED, status.statusCode.toString(), status.statusMessage)
+            methodResult?.error(ErrorCode.USER_CANCELED, status.statusCode.toString(), status.statusMessage)
           }
         }
       }
@@ -155,20 +126,20 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
     when (call.method) {
       in "setupTappay" -> {
         if (context == null) {
-          result.error(ERROR_CODE_CONTEXT_IS_NULL, "context is null", "")
+          result.error(ErrorCode.CONTEXT_IS_NULL, "context is null", "")
         } else {
           val appId: Int? = call.argument("appId")
           val appKey: String? = call.argument("appKey")
           val serverType: String? = call.argument("serverType")
           setupTappay(appId, appKey, serverType, errorMessage = {
-            result.error(ERROR_CODE_SETUP_TAPPAY_ERROR, "Setup Tappay error", it)
+            result.error(ErrorCode.SETUP_TAPPAY_ERROR, "Setup Tappay error", it)
           })
         }
       }
 
       in "isCardValid" -> {
         if (context == null) {
-          result.error(ERROR_CODE_CONTEXT_IS_NULL, "context is null", "")
+          result.error(ErrorCode.CONTEXT_IS_NULL, "context is null", "")
         } else {
           val cardNumber: String? = call.argument("cardNumber")
           val dueMonth: String? = call.argument("dueMonth")
@@ -180,7 +151,7 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
 
       in "getPrime" -> {
         if (context == null) {
-          result.error(ERROR_CODE_CONTEXT_IS_NULL, "context is null", "")
+          result.error(ErrorCode.CONTEXT_IS_NULL, "context is null", "")
         } else {
           val cardNumber: String? = call.argument("cardNumber")
           val dueMonth: String? = call.argument("dueMonth")
@@ -196,7 +167,7 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
 
       in "isEasyWalletAvailable" -> {
         if (context == null) {
-          result.error(ERROR_CODE_CONTEXT_IS_NULL, "context is null", "")
+          result.error(ErrorCode.CONTEXT_IS_NULL, "context is null", "")
         } else {
           result.success(isEasyWalletAvailable())
         }
@@ -204,7 +175,7 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
 
       in "getEasyWalletPrime" -> {
         if (context == null) {
-          result.error(ERROR_CODE_CONTEXT_IS_NULL, "context is null", "")
+          result.error(ErrorCode.CONTEXT_IS_NULL, "context is null", "")
         } else {
           val universalLink: String? = call.argument("universalLink")
           getEasyWalletPrime(universalLink, prime = {
@@ -217,7 +188,7 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
 
       in "redirectToEasyWallet" -> {
         if (context == null) {
-          result.error(ERROR_CODE_CONTEXT_IS_NULL, "context is null", "")
+          result.error(ErrorCode.CONTEXT_IS_NULL, "context is null", "")
         } else {
           val universalLink: String? = call.argument("universalLink")
           val paymentUrl: String? = call.argument("paymentUrl")
@@ -229,7 +200,7 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
 
       in "parseToEasyWalletResult" -> {
         if (context == null) {
-          result.error(ERROR_CODE_CONTEXT_IS_NULL, "context is null", "")
+          result.error(ErrorCode.CONTEXT_IS_NULL, "context is null", "")
         } else {
           val universalLink: String? = call.argument("universalLink")
           val uri: String? = call.argument("uri")
@@ -243,7 +214,7 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
 
       in "getEasyWalletResult" -> {
         if (context == null) {
-          result.error(ERROR_CODE_CONTEXT_IS_NULL, "context is null", "")
+          result.error(ErrorCode.CONTEXT_IS_NULL, "context is null", "")
         } else {
           getEasyWalletResult {
             result.success(it)
@@ -253,7 +224,7 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
 
       in "isLinePayAvailable" -> {
         if (context == null) {
-          result.error(ERROR_CODE_CONTEXT_IS_NULL, "context is null", "")
+          result.error(ErrorCode.CONTEXT_IS_NULL, "context is null", "")
         } else {
           result.success(isLinePayAvailable())
         }
@@ -261,7 +232,7 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
 
       in "getLinePayPrime" -> {
         if (context == null) {
-          result.error(ERROR_CODE_CONTEXT_IS_NULL, "context is null", "")
+          result.error(ErrorCode.CONTEXT_IS_NULL, "context is null", "")
         } else {
           val universalLink: String? = call.argument("universalLink")
           getLinePayPrime(universalLink, prime = {
@@ -274,7 +245,7 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
 
       in "redirectToLinePay" -> {
         if (context == null) {
-          result.error(ERROR_CODE_CONTEXT_IS_NULL, "context is null", "")
+          result.error(ErrorCode.CONTEXT_IS_NULL, "context is null", "")
         } else {
           val universalLink: String? = call.argument("universalLink")
           val paymentUrl: String? = call.argument("paymentUrl")
@@ -286,7 +257,7 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
 
       in "parseToLinePayResult" -> {
         if (context == null) {
-          result.error(ERROR_CODE_CONTEXT_IS_NULL, "context is null", "")
+          result.error(ErrorCode.CONTEXT_IS_NULL, "context is null", "")
         } else {
           val universalLink: String? = call.argument("universalLink")
           val uri: String? = call.argument("uri")
@@ -300,7 +271,7 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
 
       in "getLinePayResult" -> {
         if (context == null) {
-          result.error(ERROR_CODE_CONTEXT_IS_NULL, "context is null", "")
+          result.error(ErrorCode.CONTEXT_IS_NULL, "context is null", "")
         } else {
           getLinePayResult {
             result.success(it)
@@ -357,7 +328,7 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
       }
 
       else -> {
-        methodResult?.error(ERROR_CODE_NO_MATCHED_METHOD, "No matched method", "Method ${call.method} is not exist, please check method name is currect")
+        methodResult?.error(ErrorCode.NO_MATCHED_METHOD, "No matched method", "Method ${call.method} is not exist, please check method name is currect")
       }
     }
   }
@@ -556,7 +527,7 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
         if (isReadyToPay) {
           methodResult?.success(isReadyToPay)
         } else {
-          methodResult?.error(ERROR_CODE_GOOGLE_PAY_UNAVAILABLE, "Cannot use Pay with Google", msg)
+          methodResult?.error(ErrorCode.GOOGLE_PAY_UNAVAILABLE, "Cannot use Pay with Google", msg)
         }
       }
     } else {
@@ -584,7 +555,7 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
       methodResult?.success(prime)
     }, {status: Int, msg: String? ->
       Log.d(TAG, "TapPay getPrime failed : $status, msg : $msg")
-      methodResult?.error(ERROR_CODE_GET_GOOGLE_PAY_PRIME_FAILED, "Get google pay prime failed", msg)
+      methodResult?.error(ErrorCode.GET_GOOGLE_PAY_PRIME_FAILED, "Get google pay prime failed", msg)
     })
   }
 }
