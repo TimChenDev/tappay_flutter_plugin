@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:tappayflutterplugin_example/apple_pay_screen.dart';
 import 'package:tappayflutterplugin_example/direct_pay_screen.dart';
 import 'package:tappayflutterplugin_example/google_pay_screen.dart';
 import 'package:tappayflutterplugin_example/line_pay_screen.dart';
@@ -11,6 +13,7 @@ class TabScreen extends StatefulWidget {
 class _TabScreenState extends State<TabScreen> {
   final List<Widget> _tabs = [
     GooglePayScreen(),
+    ApplePayScreen(),
     DirectPayScreen(),
     LinePayScreen(),
   ];
@@ -21,10 +24,15 @@ class _TabScreenState extends State<TabScreen> {
     return Scaffold(
       body: _tabs[_currentTabIndex],
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.android_outlined),
             label: 'GooglePay',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.attach_money_outlined),
+            label: 'ApplePay',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.payment),

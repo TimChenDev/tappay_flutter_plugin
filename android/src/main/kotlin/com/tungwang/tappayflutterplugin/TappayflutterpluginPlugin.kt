@@ -48,6 +48,19 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
 
     const val LOAD_PAYMENT_DATA_REQUEST_CODE = 102
 
+    /**
+     * 找不到對應的 method
+     */
+    const val ERROR_CODE_NO_MATCHED_METHOD = "0001"
+    /**
+     * 完全沒有變數
+     */
+    const val ERROR_CODE_NO_ARGUMENTS = "0002"
+    /**
+     * 缺少某個變數
+     */
+    const val ERROR_CODE_MISSING_ARGUMENTS = "0003"
+
     // 針對各種錯誤狀況制定 ErrorCode
     const val ERROR_CODE_CONTEXT_IS_NULL = "1001"
     const val ERROR_CODE_SETUP_TAPPAY_ERROR = "1002"
@@ -341,6 +354,10 @@ class TappayflutterpluginPlugin: FlutterPlugin, MethodCallHandler, ActivityAware
 
       in "getGooglePayPrime" -> {
         getGooglePayPrime()
+      }
+
+      else -> {
+        methodResult?.error(ERROR_CODE_NO_MATCHED_METHOD, "No matched method", "Method ${call.method} is not exist, please check method name is currect")
       }
     }
   }

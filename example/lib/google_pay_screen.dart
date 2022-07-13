@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:tappayflutterplugin/tappayflutterplugin.dart';
 
@@ -16,6 +18,12 @@ class _GooglePayScreenState extends State<GooglePayScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!Platform.isAndroid) {
+      return Center(
+        child: Text('Google pay only support Android Device'),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('GooglePay'),
