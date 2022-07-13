@@ -324,7 +324,7 @@ class Tappayflutterplugin {
   /// [isAmountPending] 是否延後付款, 預設 false
   /// [isShowPaymentItem] 是否顯示購買品項, 預設 ture
   /// [isShowTotalAmount] 是否顯示總金額, 目前這個設定 false 會無法正常付款, 原因待查
-  static Future<void> prepareApplePay({
+  static Future<bool> prepareApplePay({
     required String totalPrice,
     required String paymentTitle,
     required String merchantName,
@@ -359,9 +359,11 @@ class Tappayflutterplugin {
         },
       );
       Log.d("prepareApplePay, isPrepared? $isPrepared");
+      return true;
     } on PlatformException catch (error) {
       Log.d("PlatformException: ${error.message}, ${error.details}");
       onError(error.message ?? "");
+      return false;
     }
   }
 
